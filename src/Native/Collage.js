@@ -1,6 +1,8 @@
 var _evancz$elm_graphics$Native_Collage = function()
 {
 
+var sprites = {};
+
 function setStrokeStyle(ctx, style)
 {
 	ctx.lineWidth = style.width;
@@ -122,11 +124,9 @@ function drawLine(ctx, style, path)
 	return line(ctx, style, path);
 }
 
-function texture(redo, ctx, src)
+function texture(redo, ctx, form)
 {
-	var img = new Image();
-	img.src = src;
-	img.onload = redo;
+	var img = sprites[form._0.id];
 	return ctx.createPattern(img, 'repeat');
 }
 
@@ -282,9 +282,7 @@ var defaultFacts = {
 
 function drawImage(redo, ctx, form)
 {
-	var img = new Image();
-	img.onload = redo;
-	img.src = form._3;
+	var img = sprites[form._3._0.id];
 	var w = form._0,
 		h = form._1,
 		pos = form._2,
@@ -645,8 +643,32 @@ function collage(w, h, forms)
 	});
 }
 
+
+function sprite(src)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		var img = new Image();
+		img.addEventListener('load', function() {
+			var id = (Object.keys(sprites).length + 1) + '';
+			sprites[id] = img;
+			callback(_elm_lang$core$Native_Scheduler.succeed({
+				ctor: 'Sprite',
+				_0: {
+					id: id
+				}
+			}));
+		});
+		img.addEventListener('error', function(event) {
+			callback(_elm_lang$core$Native_Scheduler.fail(event.message));
+		});
+		img.src = src;
+	});
+}
+
 return {
-	collage: F3(collage)
+	collage: F3(collage),
+	sprite: sprite
 };
 
 }();

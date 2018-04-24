@@ -6,6 +6,7 @@ module Collage exposing
   , Shape, rect, oval, square, circle, ngon, polygon
   , Path, segment, path
   , solid, dashed, dotted, LineStyle, LineCap(..), LineJoin(..), defaultLine
+  , Sprite, load, sprite
   )
   -- where
 
@@ -42,11 +43,15 @@ it as a single unit.
 # Line Styles
 @docs solid, dashed, dotted, LineStyle, LineCap, LineJoin, defaultLine
 
+# Sprites
+@docs Sprite, load, sprite
+
 -}
 
 import Color exposing (Color, black, Gradient)
 import Element exposing (Element)
 import Native.Collage
+import Platform exposing (Task)
 import Text exposing (Text)
 import Transform exposing (Transform)
 
@@ -67,7 +72,7 @@ type Form =
 
 type FillStyle
     = Solid Color
-    | Texture String
+    | Texture Sprite
     | Grad Gradient
 
 
@@ -135,7 +140,7 @@ type BasicForm
     | FShape ShapeStyle (List (Float,Float))
     | FOutlinedText LineStyle Text
     | FText Text
-    | FImage Int Int (Int,Int) String
+    | FImage Int Int (Int,Int) Sprite
     | FElement Element
     | FGroup Transform (List Form)
 
@@ -170,9 +175,9 @@ filled color shape =
 {-| Create a textured shape. The texture is described by some url and is
 tiled to fill the entire shape.
 -}
-textured : String -> Shape -> Form
-textured src shape =
-  fill (Texture src) shape
+textured : Sprite -> Shape -> Form
+textured s shape =
+  fill (Texture s) shape
 
 
 {-| Fill a shape with a [gradient](http://package.elm-lang.org/packages/elm-lang/core/latest/Color#linear). -}
@@ -196,9 +201,9 @@ traced style (Path path) =
 {-| Create a sprite from a sprite sheet. It cuts out a rectangle
 at a given position.
 -}
-sprite : Int -> Int -> (Int,Int) -> String -> Form
-sprite w h pos src =
-  form (FImage w h pos src)
+sprite : Int -> Int -> (Int,Int) -> Sprite -> Form
+sprite w h pos s =
+  form (FImage w h pos s)
 
 
 {-| Turn any `Element` into a `Form`. This lets you use text, gifs, and video
@@ -387,3 +392,13 @@ is taken from the `LineStyle` attribute instead of the `Text`.
 outlinedText : LineStyle -> Text -> Form
 outlinedText ls t =
   form (FOutlinedText ls t)
+
+{-| A displayable image. Images are pre-loaded and ready to be used
+immediately.
+-}
+type Sprite = Sprite { id : String }
+
+{-| Create a sprite from the given source.
+-}
+load : String -> Task String Sprite
+load = Native.Collage.sprite
